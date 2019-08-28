@@ -6,20 +6,26 @@ var moment = require('moment');
 var app = {
     method: process.argv[2],
     instructHeader: [
-        '',
         '----------Liri Instructions----------',
+        "",
     ],
     instructBIT: [
-        '',
-        "**Bands in Town**",
+        "**To Search Bands in Town**",
         "To search Bands in Town enter 'node liri concert-this ' and the band or artist's name.",
         "Ex: 'node liri concert-this the black keys'",
+        "",
     ],
     instructOMDB:[
-        '',
-        "**OMDB**",
+        "**To Search Open Movie Database**",
         "To search OMDB enter 'node liri movie-this ' and the movie name.",
         "Ex: 'node liri movie-this die hard'",
+        "",
+    ],
+    instructSpot:[
+        "**To Search Spotify**",
+        "To search Spotify enter 'node liri spotify-this-song ' and the song name.",
+        "Ex: 'node liri spotify-this-song turn it around'",
+        "",
     ],
     liri(){
         switch(app.method){
@@ -48,7 +54,9 @@ var app = {
                 let d = response.data;
                 if (d.Response === 'True'){
                     let output = [
-                        `Title:  ${d.Title}`, 
+                        `Information for '${d.Title}':`,
+                        ``,
+                        `Title: ${d.Title}`, 
                         `Release Year: ${d.Year}`, 
                         `IMDB Rating: ${d.imdbRating}`, 
                         `Rotten Tomatoes Score: ${d.Ratings[1] !== undefined ? d.Ratings[1].Value : 'N/A'}`, 
@@ -57,52 +65,65 @@ var app = {
                         `Plot: ${d.Plot}`, 
                         `Actors: ${d.Actors}`
                     ];
-        
                     app.consoleLog(output);
                 } else {
-                    console.log(`The movie '${movie}' was not found :-(.`);
+                    app.consoleLog([`Error: The movie '${movie}' was not found :-(.`]);
                 }
          
             });
         } else {
             this.help(this.instructOMDB);
         }
-
     },
     bands(){
         if (this.getArgs()){
 
             let artist = this.getArgs();
             let queryUrl = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp";
+            let errMessage = () => this.consoleLog([`Error: No events for '${artist}' were found :-(`]);
     
             axios.get(queryUrl).then(function(response){
                 let d = response.data;
-                if (d.length > 0){
-                    app.consoleLog(['', `${artist}'s upcoming events:`, '']);
+                if (d.length > 0 && d[0].datetime !== undefined){
+                    app.consoleLog([`${artist}'s upcoming events:`, '']);
                    
-                    let event;
-                    for (event of d){
-                        let time = moment(event.datetime, 'YYYY-MM-DD[T]HH:mm:ss').format('MM/DD/YYYY');
-                        console.log(`${time} @ ${event.venue.name} in ${event.venue.city}${event.venue.region.length > 0 ? ', ' + event.venue.region : ''}`);
+                    let e;
+                    for (e of d){
+                        let time = moment(e.datetime, 'YYYY-MM-DD[T]HH:mm:ss').format('MM/DD/YYYY');
+                        console.log(`${time} @ ${e.venue.name} in ${e.venue.city}${e.venue.region.length > 0 ? ', ' + e.venue.region : ''}`);
                     }
                 } else {
-                    console.log(`No events for '${artist}' were found :-(`);
+                    errMessage();
                 }
             }).catch(function(err){
-                console.log(`No events for '${artist}' were found :-(`);
+                errMessage();
             });
         } else {
             this.help(this.instructBIT);
         }  
     },
-    spotify(s){
-    //     * Artist(s)
+    spotify(){
+        if (this.getArgs()){
+
+            let song = this.getArgs();
+            // let queryUrl = "https://rest.bandsintown.com/artists/" + song + "/events?app_id=codingbootcamp";
+    
+            // axios.get(queryUrl).then(function(response){
+          
+            // }).catch(function(err){
+            //     this.consoleLog([`Error: No songs matching '${song}' were found :-(`])
+            // });
+
+            //     * Artist(s)
    
-    //     * The song's name
+            //     * The song's name
    
-    //     * A preview link of the song from Spotify
+            //     * A preview link of the song from Spotify
    
-    //     * The album that the song is from
+            //     * The album that the song is from
+        } else {
+            this.help(this.instructSpot);
+        }  
     },
     help(...helpArrs){
         let helpArr = [...this.instructHeader];
@@ -117,6 +138,7 @@ var app = {
         return process.argv.length > 0 ? argsArr.join(" ") : false;
     },
     consoleLog(arr){
+        console.log('');
         let x;
         for (x of arr){
             console.log(x);
