@@ -1,9 +1,12 @@
 "use strict";
 
-var axios = require('axios');
-var moment = require('moment');
+// require("dotenv").config();
+// var keys = require("./keys.js");
 
-var app = {
+const axios = require('axios');
+const moment = require('moment');
+
+const app = {
     method: process.argv[2],
     instructHeader: [
         '----------Liri Instructions----------',
@@ -11,23 +14,23 @@ var app = {
     ],
     instructBIT: [
         "**To Search Bands in Town**",
-        "To search Bands in Town enter 'node liri concert-this ' and the band or artist's name.",
+        "To search Bands in Town enter 'node liri concert-this ' followed by the band or artist's name.",
         "Ex: 'node liri concert-this the black keys'",
         "",
     ],
     instructOMDB:[
         "**To Search Open Movie Database**",
-        "To search OMDB enter 'node liri movie-this ' and the movie name.",
+        "To search OMDB enter 'node liri movie-this ' followed by the movie name.",
         "Ex: 'node liri movie-this die hard'",
         "",
     ],
     instructSpot:[
         "**To Search Spotify**",
-        "To search Spotify enter 'node liri spotify-this-song ' and the song name.",
+        "To search Spotify enter 'node liri spotify-this-song ' followed by the song name.",
         "Ex: 'node liri spotify-this-song turn it around'",
         "",
     ],
-    liri(){
+    init(){
         switch(app.method){
             case "movie-this":
                 app.movie();
@@ -40,7 +43,7 @@ var app = {
                 break;
             case "help":
             default:
-                app.help(this.instructOMDB, this.instructBIT);
+                app.help(this.instructOMDB, this.instructBIT, this.instructSpot);
                 break;
         }
     },
@@ -79,22 +82,29 @@ var app = {
         if (this.getArgs()){
 
             let artist = this.getArgs();
-            let queryUrl = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp";
+            let queryUrl = `https://rest.bandsintown.com/artists/${artist}/events?app_id=codingbootcamp`;
             let errMessage = () => this.consoleLog([`Error: No events for '${artist}' were found :-(`]);
-    
+
             axios.get(queryUrl).then(function(response){
+
                 let d = response.data;
                 if (d.length > 0 && d[0].datetime !== undefined){
+
+                    let time = (date) => moment(date, 'YYYY-MM-DD[T]HH:mm:ss').format('MM/DD/YYYY');
+                    let region = (r) => r.length > 0 ? `, ${r}` : '';
+                    let concert = (t, vname, vcity, vregion) => `${t} @ ${vname} in ${vcity}${vregion}`;
+
                     app.consoleLog([`${artist}'s upcoming events:`, '']);
-                   
+
                     let e;
                     for (e of d){
-                        let time = moment(e.datetime, 'YYYY-MM-DD[T]HH:mm:ss').format('MM/DD/YYYY');
-                        console.log(`${time} @ ${e.venue.name} in ${e.venue.city}${e.venue.region.length > 0 ? ', ' + e.venue.region : ''}`);
+                        console.log(concert(time(e.datetime), e.venue.name, e.venue.city, region(e.venue.region)));
                     }
+                    
                 } else {
                     errMessage();
                 }
+
             }).catch(function(err){
                 errMessage();
             });
@@ -146,4 +156,4 @@ var app = {
     }
 }
 
-app.liri();
+app.init();
