@@ -8,7 +8,7 @@ const spotify = new Spotify(keys.spotify);
 const axios = require('axios');
 const moment = require('moment');
 const colors = require('colors');
-var inquirer = require("inquirer");
+const inquirer = require("inquirer");
 
 colors.setTheme({
     header: ['bgCyan', 'black'],
@@ -21,21 +21,21 @@ colors.setTheme({
 const app = {
     method: process.argv[2],
     instructHeader: [
-        '----------Liri Instructions----------'.helpHeader,
-        "",
+        `----------Liri Instructions----------`.helpHeader,
+        ``,
     ],
     setUpSpot: [
-        'How to Set-Up Spotify'.helpHeader,
-        '',
-        'To use Spotify, you will need to get the necessary credentials.'.green,
-        '  1. Visit https://developer.spotify.com/dashboard/login'.mainTwo,
-        '  2. Create an account or login with your existing account.'.mainTwo,
-        "  3. Once you login, you should see an option to create a new application.".mainTwo,
-        '  4. Create a new application, and on the next screen copy the *client id* and *client secret*.'.mainTwo,
-        '  5. In the liri folder create a file named \'.env\' and format it like this:'.mainTwo,
-        '     SPOTIFY_ID=Your-ID-Here'.mainTwo,
-        '     SPOTIFY_SECRET=Your-Secret-Here'.mainTwo,
-        '  6. Save and try \'node liri spotify-this-song bye bye bye\''.mainTwo
+        `How to Set-Up Spotify`.helpHeader,
+        ``,
+        `To use Spotify, you will need to get the necessary credentials.`.green,
+        `  1. Visit https://developer.spotify.com/dashboard/login`.mainTwo,
+        `  2. Create an account or login with your existing account.`.mainTwo,
+        `  3. Once you login, you should see an option to create a new application.`.mainTwo,
+        `  4. Create a new application, and on the next screen copy the *client id* and *client secret*.`.mainTwo,
+        `  5. In the liri folder create a file named '.env' and format it like this:`.mainTwo,
+        `     SPOTIFY_ID=Your-ID-Here`.mainTwo,
+        `     SPOTIFY_SECRET=Your-Secret-Here`.mainTwo,
+        `  6. Save and try 'node liri spotify-this-song bye bye bye'`.mainTwo
     ],
     init(){
         this.instructBIT = this.helpMessage('Bands in Town', 'concert-this', "band or artist's name", 'the black keys');
@@ -94,6 +94,7 @@ const app = {
         } else {
             this.help(this.instructOMDB);
         }
+        
     },
     bands(){
         if (this.getArgs()){
@@ -131,6 +132,7 @@ const app = {
         } else {
             this.help(this.instructBIT);
         }  
+
     },
     spotify(){
         if (this.getArgs()){
@@ -166,7 +168,8 @@ const app = {
 
         } else {
             this.help(this.instructSpot);
-        }  
+        } 
+
     },
     liriHelp(){
 
@@ -193,14 +196,17 @@ const app = {
                         break;
                 }
             });
+
     },
     help(...helpArrs){
+
         let helpArr = [...this.instructHeader];
         let x;
         for (x of helpArrs){
             helpArr = helpArr.concat(x);
         }
         this.consoleLog(helpArr);
+
     },
     helpMessage(service, command, input, example){
         let helpArray = [
