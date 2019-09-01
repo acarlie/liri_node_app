@@ -1,5 +1,34 @@
 # Liri Node App
 
+Liri is a node.js application that can search the Spotify, Open Movie Database, and the Bands in Town APIs.
+
+*Installation*
+* [How to Install](#liri-set-up)
+* [Setting up Spotify](#spotify-set-up)
+
+*How to Use*
+* [Search Open Movie Database](#search-open-movie-database)
+* [Search Spotify](#search-spotify)
+* [Search Bands in Town](#search-bands-in-town)
+* [Liri Help](#liri-help)
+
+---
+### Liri Set-Up
+ 1. First, clone the repository to your computer.
+ 2. Then, navigate to the folder in terminal/git bash. Type npm install to install all necessary node.js modules. (If node.js is not installed, see this link on how to install: https://nodejs.org/en/download/)
+ 3. See the next section about [setting up Spotify](#spotify-set-up).
+
+---
+### Spotify Set-Up
+To set up spotify, you'll need generate *client id* and *client secret* with Spotify. See directions below.
+ 1. Visit https://developer.spotify.com/dashboard/login
+ 2. Create an account or login with your existing account.
+ 3. Once you login, you should see an option to create a new application.
+ 4. Create a new application, and on the next screen copy the *client id* and *client secret*.
+ 5. In the liri folder create a file named '.env' and format it like this:  SPOTIFY_ID=Your-ID-Here  SPOTIFY_SECRET=Your-Secret-Here
+ 6. Save and try 'node liri spotify-this-song bye bye bye'
+
+---
 ### Search Open Movie Database
 *Command format:*
 ```
@@ -65,11 +94,3 @@ node liri help
 *Liri Instructions Response:*
 ![Liri Instructions Response](images/liri_instructions.png)
 
----
-### Setting Up Spotify
- 1. Visit https://developer.spotify.com/dashboard/login
- 2. Create an account or login with your existing account.
- 3. Once you login, you should see an option to create a new application.
- 4. Create a new application, and on the next screen copy the *client id* and *client secret*.
- 5. In the liri folder create a file named '.env' and format it like this:  SPOTIFY_ID=Your-ID-Here  SPOTIFY_SECRET=Your-Secret-Here
- 6. Save and try 'node liri spotify-this-song bye bye bye'
