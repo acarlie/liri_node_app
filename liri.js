@@ -2,6 +2,7 @@
 
 require("dotenv").config();
 
+var fs = require("fs");
 const keys = require("./keys.js");
 const Spotify = require('node-spotify-api');
 const spotify = new Spotify(keys.spotify);
@@ -20,6 +21,7 @@ colors.setTheme({
 
 const app = {
     method: process.argv[2],
+    prevCommand: [],
     instructHeader: [
         `----------Liri Instructions----------`.helpHeader,
         ``,
@@ -37,32 +39,106 @@ const app = {
         `     SPOTIFY_SECRET=Your-Secret-Here`.mainTwo,
         `  6. Save and try 'node liri spotify-this-song bye bye bye'`.mainTwo
     ],
+    searchSaved(arr){
+        let that = this;
+        const inquire = () => {
+            return inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Saved Searches".green,
+                        choices: arr,
+                        name: "saved"
+                    }
+                ])
+                .then(res => {return res});
+                
+                    // console.log(res);
+                    // var splitArr = res.saved.split('_');
+                    // that.switchArg(splitArr[0], splitArr[1]))
+        };
+        
+        const values = async () => {
+            console.log('hello');
+            const hello = await inquire();
+            console.log(hello);
+        }
+
+        values();
+    },
+    savedSwitch(){
+
+    },
+    getSaved(){
+        let that = this;
+        const readFilePromise = () => {
+            return new Promise((resolve, reject) => {
+                fs.readFile("saved.txt", "utf8", function(err, content){
+                    if (err){
+                        return console.log(err);
+                    }
+
+                    let tempStr = content.substring(0, content.length - 1);
+                    let saved = tempStr.split('|');
+                    let savedArr = saved.map((i) => i.split(','));
+                    let objArr = savedArr.map(function(i){
+                        return {name: i[1], value: i[0]};
+                    });
+
+                    resolve(objArr);
+                });
+            });
+        };
+
+        readFilePromise()
+            .then(function(res){
+                app.searchSaved(res);
+            });
+            // that.switchArg(splitArr[0], splitArr[1]))
+            // .then((res) => console.log(res));
+    },
+    saveSearch(method, search){
+        fs.appendFile("saved.txt", `[${method},${method}_${search}], `, function(err){
+        if (err){
+            return console.log(err);
+        }
+
+        console.log('updated');
+        });
+    },
     init(){
         this.instructBIT = this.helpMessage('Bands in Town', 'concert-this', "band or artist's name", 'the black keys');
         this.instructOMDB = this.helpMessage('Open Movie Database(OMDB)', 'movie-this', 'movie name', 'die hard');
         this.instructSpot = this.helpMessage('Spotify', 'spotify-this-song', 'song name', 'turn it around');
-
-        switch(this.method){
+        let arg = this.getArgs();
+        this.switchArg(this.method, arg);
+    },
+    switchArg(method, arg){
+        
+        switch(method){
             case "movie-this":
-                this.movie();
+                this.movie(arg);
                 break;
             case "concert-this":
-                this.bands();
+                this.bands(arg);
                 break;
             case "spotify-this-song":
-                this.spotify();
+                this.spotify(arg);
                 break;
             case "help":
-            default:
+            // default:
                 this.liriHelp();
+                break;
+            case "saved":
+                this.getSaved();
                 break;
         }
     },
-    movie(){
-        if (this.getArgs()){
+    movie(movie){
+        if (movie){
 
             let that = this;
-            let movie = this.getArgs();
+            // let movie = this.getArgs();
             let queryUrl = `http://www.omdbapi.com/?t=${movie}&y=&plot=short&apikey=trilogy`;
     
             axios
@@ -96,11 +172,11 @@ const app = {
         }
         
     },
-    bands(){
-        if (this.getArgs()){
+    bands(artist){
+        if (artist){
 
             let that = this;
-            let artist = this.getArgs();
+            // let artist = this.getArgs();
             let queryUrl = `https://rest.bandsintown.com/artists/${artist}/events?app_id=codingbootcamp`;
             let errMessage = () => this.consoleLog([`Error: No events for '${artist}' were found :-(`.err]);
 
@@ -134,11 +210,11 @@ const app = {
         }  
 
     },
-    spotify(){
-        if (this.getArgs()){
+    spotify(song){
+        if (song){
 
             let that = this;
-            let song = this.getArgs();
+            // let song = this.getArgs();
             let errMessage = () => this.consoleLog([`The song '${song}' was not found :-(`.err]);
 
             spotify
