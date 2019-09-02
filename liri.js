@@ -59,9 +59,9 @@ const app = {
         };
         
         const values = async () => {
-            console.log('hello');
-            const hello = await inquire();
-            console.log(hello);
+            let res = await inquire();
+            let splitArr = res.saved.split('_');
+            that.switchArg(splitArr[0], splitArr[1]);
         }
 
         values();
