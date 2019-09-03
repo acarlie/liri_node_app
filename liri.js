@@ -21,7 +21,6 @@ colors.setTheme({
 
 const app = {
     method: process.argv[2],
-    prevCommand: [],
     instructHeader: [
         `----------Liri Instructions----------`.helpHeader,
         ``,
@@ -39,73 +38,6 @@ const app = {
         `     SPOTIFY_SECRET=Your-Secret-Here`.mainTwo,
         `  6. Save and try 'node liri spotify-this-song bye bye bye'`.mainTwo
     ],
-    searchSaved(arr){
-        let that = this;
-        const inquire = () => {
-            return inquirer
-                .prompt([
-                    {
-                        type: "list",
-                        message: "Saved Searches".green,
-                        choices: arr,
-                        name: "saved"
-                    }
-                ])
-                .then(res => {return res});
-                
-                    // console.log(res);
-                    // var splitArr = res.saved.split('_');
-                    // that.switchArg(splitArr[0], splitArr[1]))
-        };
-        
-        const values = async () => {
-            let res = await inquire();
-            let splitArr = res.saved.split('_');
-            that.switchArg(splitArr[0], splitArr[1]);
-        }
-
-        values();
-    },
-    savedSwitch(){
-
-    },
-    getSaved(){
-        let that = this;
-        const readFilePromise = () => {
-            return new Promise((resolve, reject) => {
-                fs.readFile("saved.txt", "utf8", function(err, content){
-                    if (err){
-                        return console.log(err);
-                    }
-
-                    let tempStr = content.substring(0, content.length - 1);
-                    let saved = tempStr.split('|');
-                    let savedArr = saved.map((i) => i.split(','));
-                    let objArr = savedArr.map(function(i){
-                        return {name: i[1], value: i[0]};
-                    });
-
-                    resolve(objArr);
-                });
-            });
-        };
-
-        readFilePromise()
-            .then(function(res){
-                app.searchSaved(res);
-            });
-            // that.switchArg(splitArr[0], splitArr[1]))
-            // .then((res) => console.log(res));
-    },
-    saveSearch(method, search){
-        fs.appendFile("saved.txt", `[${method},${method}_${search}], `, function(err){
-        if (err){
-            return console.log(err);
-        }
-
-        console.log('updated');
-        });
-    },
     init(){
         this.instructBIT = this.helpMessage('Bands in Town', 'concert-this', "band or artist's name", 'the black keys');
         this.instructOMDB = this.helpMessage('Open Movie Database(OMDB)', 'movie-this', 'movie name', 'die hard');
@@ -125,12 +57,18 @@ const app = {
             case "spotify-this-song":
                 this.spotify(arg);
                 break;
-            case "help":
-            // default:
-                this.liriHelp();
-                break;
             case "saved":
-                this.getSaved();
+                this.getSaved('saved.txt', 'Saved Searches', 'saved', false);
+                break;
+            case "save-last":
+                this.getSaved('history.txt', '', '', true);
+                break;
+            case "history":
+                this.getSaved('history.txt', "Recent Searches", "hist", false);
+                break;
+            case "help":
+            default:
+                this.liriHelp();
                 break;
         }
     },
@@ -138,7 +76,6 @@ const app = {
         if (movie){
 
             let that = this;
-            // let movie = this.getArgs();
             let queryUrl = `http://www.omdbapi.com/?t=${movie}&y=&plot=short&apikey=trilogy`;
     
             axios
@@ -159,6 +96,7 @@ const app = {
                             `Actors: ${d.Actors}`.mainTwo
                         ];
                         that.consoleLog(output);
+                        that.appendToHist('movie-this', movie);
                     } else {
                         that.consoleLog([`Error: The movie '${movie}' was not found :-(.`.err]);
                     }
@@ -176,7 +114,6 @@ const app = {
         if (artist){
 
             let that = this;
-            // let artist = this.getArgs();
             let queryUrl = `https://rest.bandsintown.com/artists/${artist}/events?app_id=codingbootcamp`;
             let errMessage = () => this.consoleLog([`Error: No events for '${artist}' were found :-(`.err]);
 
@@ -197,6 +134,7 @@ const app = {
                         for (e of d){
                             console.log(dateTime(time(e.datetime)), concert(e.venue.name, e.venue.city, region(e.venue.region)));
                         }
+                        that.appendToHist('concert-this', artist);
                     } else {
                         errMessage();
                     }
@@ -214,7 +152,6 @@ const app = {
         if (song){
 
             let that = this;
-            // let song = this.getArgs();
             let errMessage = () => this.consoleLog([`The song '${song}' was not found :-(`.err]);
 
             spotify
@@ -234,6 +171,7 @@ const app = {
                             ]
                             that.consoleLog(output);
                         }
+                        that.appendToHist('spotify-this-song', song);
                     } else{
                         errMessage();
                     }
@@ -246,6 +184,82 @@ const app = {
             this.help(this.instructSpot);
         } 
 
+    },
+    searchSaved(arr, message, name){
+        let that = this;
+        const inquire = () => {
+            return inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: message .green,
+                        choices: arr,
+                        name: name
+                    }
+                ])
+                .then(res => {return res});
+        };
+        
+        const values = async () => {
+            let res = await inquire();
+            let splitArr = res[name].split('_');
+            that.switchArg(splitArr[0], splitArr[1]);
+        }
+
+        values();
+    },
+    getSaved(file, message, name, isToSave){
+        let that = this;
+        const readFilePromise = () => {
+            return new Promise((resolve, reject) => {
+                fs.readFile(file, "utf8", function(err, content){
+                    if (err){
+                        return console.log(err);
+                    }
+
+                    let tempStr = content.substring(0, content.length - 1);
+                    let saved = tempStr.split('|');
+                    let final;
+
+                    if (!isToSave){
+                        let savedArr = saved.map((i) => i.split(','));
+                        let objArr = savedArr.map(function(i){
+                            return {name: i[1], value: i[0]};
+                        });
+                        final = objArr.reverse();
+    
+                    } else {
+                        final = [...saved];
+                    }
+
+                    resolve(final);
+                  
+                });
+            });
+        };
+
+        if (!isToSave){
+            readFilePromise()
+            .then(function(res){
+                that.searchSaved(res, message, name);
+            });
+        } else {
+            readFilePromise()
+            .then(function(res){
+                that.appendToFile('saved.txt', `${res[res.length-1]}|`);
+            });
+        }
+    },
+    appendToFile(file, str){
+        fs.appendFile(file, str, function(err){
+            if (err){
+                return console.log(err);
+            }
+        });
+    },
+    appendToHist(method, search){
+        let str = `${method}_${search},${search}|`;
+        this.appendToFile("history.txt", str);
     },
     liriHelp(){
 
