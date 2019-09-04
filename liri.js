@@ -1,23 +1,35 @@
 "use strict";
 
 require("dotenv").config();
-
-var fs = require("fs");
-const keys = require("./keys.js");
-const Spotify = require('node-spotify-api');
+const fs = require("fs");
 const axios = require('axios');
 const moment = require('moment');
 const colors = require('colors');
 const inquirer = require("inquirer");
-const spotify = new Spotify(keys.spotify);
+
+//Spotify
+let keys;
+let spotifySetUp = true;
+const Spotify = require('node-spotify-api');
+let spotify;
+
+//Allows app to function before Spotify is set-up.
+try {
+    keys = require("./keys.js");
+    spotify = new Spotify(keys.spotify);
+}
+catch(err) {
+    spotifySetUp = false;
+}
 
 colors.setTheme({
     header: ['bgCyan', 'black'],
     main: 'cyan',
     mainTwo: 'grey',
     helpHeader: ['bgGreen', 'black'],
-    err: 'red'
-  });
+    err: 'red',
+    errHeader: ['bgRed', 'black']
+});
 
 const app = {
     instructHeader: [
@@ -37,7 +49,6 @@ const app = {
         this.switchArg(process.argv[2], this.getArgs());
     },
     switchArg(method, arg){
-        
         switch(method){
             case "movie-this":
                 this.movie(arg);
@@ -55,7 +66,7 @@ const app = {
                 this.getSaved('history.txt', '', '', true);
                 break;
             case "history":
-                this.getSaved('history.txt', "Recent Searches", "hist", false);
+                this.getSaved('history.txt', "Recent Searches", "history", false);
                 break;
             case "help":
             default:
@@ -81,7 +92,7 @@ const app = {
                             `Release Year: ${d.Year}\nIMDB Rating: ${d.imdbRating}\nRotten Tomatoes Score: ${d.Ratings[1] !== undefined ? d.Ratings[1].Value : 'N/A'}\nCountry: ${d.Country}\nLanguage(s): ${d.Language}\nPlot: ${d.Plot}\nActors: ${d.Actors}`.mainTwo
                         ];
                         that.consoleLog(output);
-                        that.appendToHist('movie-this', movie);
+                        that.toAppend('movie-this', movie);
                     } else {
                         that.consoleLog([`Error: The movie '${movie}' was not found :-(.`.err]);
                     }
@@ -93,7 +104,6 @@ const app = {
         } else {
             this.help(this.instructOMDB);
         }
-        
     },
     bands(artist){
         if (artist){
@@ -119,7 +129,7 @@ const app = {
                         for (e of d){
                             console.log(dateTime(time(e.datetime)), concert(e.venue.name, e.venue.city, region(e.venue.region)));
                         }
-                        that.appendToHist('concert-this', artist);
+                        that.toAppend('concert-this', artist);
                     } else {
                         errMessage();
                     }
@@ -134,7 +144,7 @@ const app = {
 
     },
     spotify(song){
-        if (song){
+        if (song && spotifySetUp){
 
             let that = this;
             let errMessage = () => this.consoleLog([`The song '${song}' was not found :-(`.err]);
@@ -155,7 +165,7 @@ const app = {
                             ]
                             that.consoleLog(output);
                         }
-                        that.appendToHist('spotify-this-song', song);
+                        that.toAppend('spotify-this-song', song);
                     } else{
                         errMessage();
                     }
@@ -164,56 +174,31 @@ const app = {
                     errMessage();
                 });
 
-        } else {
+        } else if (!song && spotifySetUp){
             this.help(this.instructSpot);
-        } 
-
-    },
-    searchSaved(arr, message, name){
-        let that = this;
-        const inquire = () => {
-            return inquirer
-                .prompt([
-                    {
-                        type: "list",
-                        message: message .green,
-                        choices: arr,
-                        name: name
-                    }
-                ])
-                .then(res => {return res});
-        };
-        
-        const values = async () => {
-            let res = await inquire();
-            let splitArr = res[name].split('_');
-            that.switchArg(splitArr[0], splitArr[1]);
+        } else if (!spotifySetUp){
+            console.log(`\nSpotify isn't set-up :-(. Please follow the instructions below to set-up Spotify` .errHeader);
+            this.consoleLog(this.setUpSpot);
         }
 
-        values();
     },
     getSaved(file, message, name, isToSave){
         let that = this;
+
+        //reads chosen file
         const readFilePromise = () => {
             return new Promise((resolve, reject) => {
                 fs.readFile(file, "utf8", function(err, content){
-                    if (err){
-                        return console.log(err);
-                    }
 
-                    let tempStr = content.substring(0, content.length - 1);
-                    let saved = tempStr.split('|');
+                    let parsed = that.parseSaved(content);
                     let final;
 
-                    if (!isToSave){
-                        let savedArr = saved.map((i) => i.split(','));
-                        let objArr = savedArr.map(function(i){
-                            return {name: i[1], value: i[0]};
-                        });
-                        final = objArr.reverse();
-    
+                    if (!isToSave && content.length > 0){
+                        final = parsed.objs;
+                    } else if (content.length > 0){
+                        final = [...parsed.split];
                     } else {
-                        final = [...saved];
+                        final ='';
                     }
 
                     resolve(final);
@@ -223,17 +208,62 @@ const app = {
         };
 
         if (!isToSave){
+            //if reading file to display history or saved
             readFilePromise()
             .then(function(res){
                 that.searchSaved(res, message, name);
             });
         } else {
+            //if saving last search
             readFilePromise()
             .then(function(res){
-                
                 that.appendToFile('saved.txt', `${res[res.length-1]}|`);
             });
         }
+    },
+    searchSaved(arr, message, name){
+        let that = this;
+        if (arr.length > 0){
+
+            //displays history or saved
+            const inquire = () => {
+                return inquirer
+                    .prompt([
+                        {
+                            type: "list",
+                            message: message .green,
+                            choices: arr,
+                            name: name
+                        }
+                    ])
+                    .then(res => {return res});
+            };
+            
+            //searches chosen terms
+            const values = async () => {
+                let res = await inquire();
+                let splitArr = res[name].split('_');
+                that.switchArg(splitArr[0], splitArr[1]);
+            }
+    
+            values();
+        } else {
+            //If no history or saved exists
+            let alert = name === "history" ? `No history to show :-(` : `\nThere are no saved searches yet, after searching type 'node liri save-last' to save a search.`;
+            console.log(alert .errHeader);
+        }
+        
+    },
+    parseSaved(res){
+        let tempStr = res.substring(0, res.length - 1);
+        let split = tempStr.split('|');
+        let secondSplit = split.map((i) => i.split(','));
+        let objArr = secondSplit.map(function(i){
+            return {name: i[1], value: i[0]};
+        });
+        let reversed = objArr.reverse();
+
+        return {split: split, objs: reversed};
     },
     appendToFile(file, str){
         fs.appendFile(file, str, function(err){
@@ -242,7 +272,7 @@ const app = {
             }
         });
     },
-    appendToHist(method, search){
+    toAppend(method, search){
         let str = `${method}_${search},${search}|`;
         this.appendToFile("history.txt", str);
     },
@@ -286,8 +316,7 @@ const app = {
     helpMessage(service, command, input, example){
         let helpArray = [
             `**To Search ${service}**`.green,
-            `To search ${service} enter 'node liri ${command} ' followed by the ${input}.`.mainTwo,
-            `Ex: 'node liri ${command} ${example}'`.mainTwo,
+            `To search ${service} enter 'node liri ${command} ' followed by the ${input}.\nEx: 'node liri ${command} ${example}'`.mainTwo,
             ``,
         ]
         return helpArray;
