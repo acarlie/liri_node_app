@@ -5,11 +5,11 @@ require("dotenv").config();
 var fs = require("fs");
 const keys = require("./keys.js");
 const Spotify = require('node-spotify-api');
-const spotify = new Spotify(keys.spotify);
 const axios = require('axios');
 const moment = require('moment');
 const colors = require('colors');
 const inquirer = require("inquirer");
+const spotify = new Spotify(keys.spotify);
 
 colors.setTheme({
     header: ['bgCyan', 'black'],
@@ -20,7 +20,6 @@ colors.setTheme({
   });
 
 const app = {
-    method: process.argv[2],
     instructHeader: [
         `----------Liri Instructions----------`.helpHeader,
         ``,
@@ -29,21 +28,13 @@ const app = {
         `How to Set-Up Spotify`.helpHeader,
         ``,
         `To use Spotify, you will need to get the necessary credentials.`.green,
-        `  1. Visit https://developer.spotify.com/dashboard/login`.mainTwo,
-        `  2. Create an account or login with your existing account.`.mainTwo,
-        `  3. Once you login, you should see an option to create a new application.`.mainTwo,
-        `  4. Create a new application, and on the next screen copy the *client id* and *client secret*.`.mainTwo,
-        `  5. In the liri folder create a file named '.env' and format it like this:`.mainTwo,
-        `     SPOTIFY_ID=Your-ID-Here`.mainTwo,
-        `     SPOTIFY_SECRET=Your-Secret-Here`.mainTwo,
-        `  6. Save and try 'node liri spotify-this-song bye bye bye'`.mainTwo
+        `  1. Visit https://developer.spotify.com/dashboard/login\n  2. Create an account or login with your existing account.\n  3. Once you login, you should see an option to create a new application.\n  4. Create a new application, and on the next screen copy the *client id* and *client secret*.\n  5. In the liri folder create a file named '.env' and format it like this:\n     SPOTIFY_ID=Your-ID-Here\n     SPOTIFY_SECRET=Your-Secret-Here\n  6. Save and try 'node liri spotify-this-song bye bye bye'`.mainTwo
     ],
     init(){
         this.instructBIT = this.helpMessage('Bands in Town', 'concert-this', "band or artist's name", 'the black keys');
         this.instructOMDB = this.helpMessage('Open Movie Database(OMDB)', 'movie-this', 'movie name', 'die hard');
         this.instructSpot = this.helpMessage('Spotify', 'spotify-this-song', 'song name', 'turn it around');
-        let arg = this.getArgs();
-        this.switchArg(this.method, arg);
+        this.switchArg(process.argv[2], this.getArgs());
     },
     switchArg(method, arg){
         
@@ -87,13 +78,7 @@ const app = {
                             `Information for '${d.Title}':`.header,
                             ``,
                             `Title: ${d.Title}`.main, 
-                            `Release Year: ${d.Year}`.mainTwo, 
-                            `IMDB Rating: ${d.imdbRating}`.mainTwo, 
-                            `Rotten Tomatoes Score: ${d.Ratings[1] !== undefined ? d.Ratings[1].Value : 'N/A'}`.mainTwo, 
-                            `Country: ${d.Country}`.mainTwo, 
-                            `Language(s): ${d.Language}`.mainTwo, 
-                            `Plot: ${d.Plot}`.mainTwo, 
-                            `Actors: ${d.Actors}`.mainTwo
+                            `Release Year: ${d.Year}\nIMDB Rating: ${d.imdbRating}\nRotten Tomatoes Score: ${d.Ratings[1] !== undefined ? d.Ratings[1].Value : 'N/A'}\nCountry: ${d.Country}\nLanguage(s): ${d.Language}\nPlot: ${d.Plot}\nActors: ${d.Actors}`.mainTwo
                         ];
                         that.consoleLog(output);
                         that.appendToHist('movie-this', movie);
@@ -166,8 +151,7 @@ const app = {
                         for (x of d){
                             let output = [
                                 `'${x.name}' by ${x.artists[0].name}`.main,
-                                `   Album: ${x.album.name}`.mainTwo, 
-                                `   Link: ${x.external_urls.spotify}`.mainTwo
+                                `   Album: ${x.album.name}\n   Link: ${x.external_urls.spotify}`.mainTwo
                             ]
                             that.consoleLog(output);
                         }
@@ -246,6 +230,7 @@ const app = {
         } else {
             readFilePromise()
             .then(function(res){
+                
                 that.appendToFile('saved.txt', `${res[res.length-1]}|`);
             });
         }
