@@ -60,13 +60,13 @@ const app = {
                 this.spotify(arg);
                 break;
             case "saved":
-                this.getSaved('saved.txt', 'Saved Searches', 'saved', false);
+                this.getFileThen('saved.txt', 'Saved Searches', 'saved', false);
                 break;
             case "save-last":
-                this.getSaved('history.txt', '', '', true);
+                this.getFileThen('history.txt', '', '', true);
                 break;
             case "history":
-                this.getSaved('history.txt', "Recent Searches", "history", false);
+                this.getFileThen('history.txt', "Recent Searches", "history", false);
                 break;
             case "help":
             default:
@@ -182,88 +182,78 @@ const app = {
         }
 
     },
-    getSaved(file, message, name, isToSave){
+    readFilePromise(file){
+        let that = this;
+        return new Promise((resolve, reject) => {
+            fs.readFile(file, "utf8", function(err, content){
+                let parsed = that.parseSaved(content);
+                resolve(parsed);
+            });
+        });
+    },
+    getFileThen(file, message, name, isToSave){
         let that = this;
 
-        //reads chosen file
-        const readFilePromise = () => {
-            return new Promise((resolve, reject) => {
-                fs.readFile(file, "utf8", function(err, content){
-
-                    let parsed = that.parseSaved(content);
-                    let final;
-
-                    if (!isToSave && content.length > 0){
-                        final = parsed.objs;
-                    } else if (content.length > 0){
-                        final = [...parsed.split];
-                    } else {
-                        final ='';
-                    }
-
-                    resolve(final);
-                  
-                });
-            });
-        };
-
-        if (!isToSave){
-            //if reading file to display history or saved
-            readFilePromise()
-            .then(function(res){
-                that.searchSaved(res, message, name);
-            });
-        } else {
-            //if saving last search
-            readFilePromise()
-            .then(function(res){
-                that.appendToFile('saved.txt', `${res[res.length-1]}|`);
-            });
-        }
+        this.readFilePromise(file)
+        .then(function(res){
+            if (res.objs && !isToSave){
+                //View history or saved
+                that.searchSaved(res.objs, message, name);
+            } else if (res.split && isToSave){
+                //Saving last search
+                let arr = [...res.split];
+                that.appendToFile('saved.txt', `${arr[arr.length-1]}|`);
+                console.log('\nSearch Saved.' .helpHeader);
+            } else if (!isToSave){
+                //If no history or saved exists
+                let alert = name === "history" ? `\nNo history to show :-(` : `\nThere are no saved searches yet, after searching type 'node liri save-last' to save a search.`;
+                console.log(alert .errHeader);
+            } else {
+                //If trying to save and no history exists
+                console.log(`\nNo searches to save :-(` .errHeader);
+            }
+        });
+        
     },
     searchSaved(arr, message, name){
         let that = this;
-        if (arr.length > 0){
-
-            //displays history or saved
-            const inquire = () => {
-                return inquirer
-                    .prompt([
-                        {
-                            type: "list",
-                            message: message .green,
-                            choices: arr,
-                            name: name
-                        }
-                    ])
-                    .then(res => {return res});
-            };
-            
-            //searches chosen terms
-            const values = async () => {
-                let res = await inquire();
-                let splitArr = res[name].split('_');
-                that.switchArg(splitArr[0], splitArr[1]);
-            }
-    
-            values();
-        } else {
-            //If no history or saved exists
-            let alert = name === "history" ? `No history to show :-(` : `\nThere are no saved searches yet, after searching type 'node liri save-last' to save a search.`;
-            console.log(alert .errHeader);
+      
+        //searches chosen terms
+        const values = async () => {
+            let res = await that.inquireList(arr, message, name);
+            let splitArr = res[name].split('_');
+            that.switchArg(splitArr[0], splitArr[1]);
         }
-        
+
+        values();
+
     },
     parseSaved(res){
         let tempStr = res.substring(0, res.length - 1);
-        let split = tempStr.split('|');
-        let secondSplit = split.map((i) => i.split(','));
-        let objArr = secondSplit.map(function(i){
-            return {name: i[1], value: i[0]};
-        });
-        let reversed = objArr.reverse();
+        let split = res.length > 0 ? tempStr.split('|') : false ;
+        let final;
 
-        return {split: split, objs: reversed};
+        if (split){
+            let secondSplit = split.map((i) => i.split(','));
+            let objArr = secondSplit.map(function(i){
+                return {name: i[1], value: i[0]};
+            });
+            final = res.length > 0 ? objArr.reverse() : false ;
+        }
+        
+        return {split: split, objs: final};
+    },
+    inquireList(arr, message, name){
+        return inquirer
+            .prompt([
+                {
+                    type: "list",
+                    message: message .green,
+                    choices: arr,
+                    name: name
+                }
+            ])
+            .then(res => {return res});
     },
     appendToFile(file, str){
         fs.appendFile(file, str, function(err){
