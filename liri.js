@@ -59,14 +59,14 @@ const app = {
             case "spotify-this-song":
                 this.spotify(arg);
                 break;
-            case "saved":
-                this.browseSavedOrHist('saved.txt', 'Saved Searches', 'saved');
-                break;
             case "save-last":
                 this.saveLast('history.txt');
                 break;
+            case "saved":
+                this.browseSavedOrHist('saved.txt', 'Saved Searches', 'saved');
+                break;
             case "history":
-                this.browseSavedOrHist('history.txt', "Recent Searches", "history");
+                this.browseSavedOrHist('history.txt', 'Recent Searches', 'history');
                 break;
             case "random":
                 this.random();
@@ -257,7 +257,7 @@ const app = {
     },
     readFilePromise(file){
         let that = this;
-        
+
         return new Promise((resolve, reject) => {
             fs.readFile(file, "utf8", function(err, content){
                 let parsed = that.parseSaved(content);

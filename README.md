@@ -10,6 +10,9 @@ Liri is a node.js application that can search the Spotify, Open Movie Database, 
 * [Search Open Movie Database](#search-open-movie-database)
 * [Search Spotify](#search-spotify)
 * [Search Bands in Town](#search-bands-in-town)
+* [Save Searches](#save-searches)
+* [Access Saved Searches and History](#access-saved-searches-and-history)
+* [Recieve Random Results](#random-results)
 * [Liri Help](#liri-help)
 
 ---
@@ -72,6 +75,46 @@ node liri concert-this the black keys
 
 *Example Response:*
 ![Example of a Bands in Town response.](images/liri_concert-this.png)
+
+---
+### Save Searches
+After searching, you can save your search with the save-last command.
+
+*Command format:*
+```
+node liri save-last
+```
+
+---
+### Access Saved Searches and History
+You can access your saved searches and history using the following commands. After entering either of these commands, you will recieve a prompt allowing you to select a previous search and recieve the results.
+
+*Command format to access saved searches:*
+```
+node liri saved
+```
+*Example Response:*
+
+![Example of saved response.](images/liri_saved.png)
+
+
+*Command format to access history:*
+```
+node liri history
+```
+
+*Example Response:*
+![Example of history response.](images/liri_history.png)
+
+---
+### Random Results
+
+To receive a random result, use the following command:
+
+*Command format*
+```
+node liri random
+```
 
 ---
 ### Liri Help
