@@ -42,7 +42,7 @@ module.exports = {
     "func-call-spacing": ["error", "never"],
     "generator-star-spacing": ["error", { "before": true, "after": true }],
     "handle-callback-err": ["error", "^(err|error)$" ],
-    "indent": ["error", 2, {
+    "indent": ["error", 4, {
       "SwitchCase": 1,
       "VariableDeclarator": 1,
       "outerIIFEBody": 1,
