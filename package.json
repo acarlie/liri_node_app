@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/acarlie/liri_node_app#readme",
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "colors": "^1.3.3",
     "dotenv": "^8.1.0",
     "inquirer": "^7.0.0",
